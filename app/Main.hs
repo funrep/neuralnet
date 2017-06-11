@@ -1,6 +1,6 @@
 module Main where
 
-import Lib
+import ANN
 
 main :: IO ()
 main = someFunc
