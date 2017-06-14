@@ -11,7 +11,12 @@ createNet xs = create (head xs) (tail xs)
     where
         create  _ [] = []
         create p (x:xs) = replicate x (Neuron (replicate (p + 1) 0.5) 0 0)
-                            : create p xs
+                            : create x xs
+
+backprop :: [Double] -> [Double] -> Network -> Network
+backprop xs ts net =
+    let net' = calcHidError . calcOutError ts $ feedForward xs net
+    in backpropError xs net'
 
 someFunc :: IO ()
 someFunc = putStrLn "someFunc"

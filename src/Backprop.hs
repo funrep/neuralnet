@@ -15,17 +15,17 @@ runNeuron xs (Neuron ws _ e) = Neuron ws out e
     where out = sigmoid . sum $ zipWith (*) (1:xs) ws
 
 sigmoid :: Double -> Double
-sigmoid x = 1 / (1 + e**x)
+sigmoid x = 1 / (1 + e**(-x))
     where e = exp 1
 
 -- Calculate error signals of output layer
-calcOutError :: [Double] -> [Double] -> Network -> Network
-calcOutError ts ys nss =
-    take (length nss - 1) nss ++ [run ts ys $ last nss]
+calcOutError :: [Double] -> Network -> Network
+calcOutError ts nss =
+    take (length nss - 1) nss ++ [run ts $ last nss]
     where
-        run _ _ [] = []
-        run (t:ts) (y:ys) ((Neuron ws o _):ns) =
-            (Neuron ws o (err t y)) : run ts ys ns
+        run _ [] = []
+        run (t:ts) ((Neuron ws o _):ns) =
+            (Neuron ws o (err t o)) : run ts ns
         err t y = (t - y) * y * (1 - y)
 
 -- Calculate error signals for hidden layers
@@ -33,7 +33,7 @@ calcHidError :: Network -> Network
 calcHidError = reverse . calcHidErrorRev . reverse
 
 calcHidErrorRev :: Network -> Network
-calcHidErrorRev (ns:nss) = run ns $ tail nss
+calcHidErrorRev (ns:nss) = ns : run ns nss
     where
         run _ [] = []
         run ps (ns:nss) =
@@ -44,27 +44,29 @@ calcHidErrorRev (ns:nss) = run ns $ tail nss
                                 foldr (\w1 w2 -> w1 * e + w2 * e) 0 ws) ns
 
 -- Back propagate errors
-backpropError :: Network -> Network
-backpropError = reverse . backpropErrorRev . reverse
+backpropError :: [Double] -> Network -> Network
+backpropError xs = reverse . backpropErrorRev xs . reverse
 
-backpropErrorRev :: Network -> Network
-backpropErrorRev (ns:nss) = run ns nss
-    where
-        run _ [] = []
-        run ps (ns:nss) = updateLayer ps ns : run ns nss
+backpropErrorRev :: [Double] -> Network -> Network
+backpropErrorRev _ [] = []
+backpropErrorRev xs (ns:nss)
+    | nss == [] = [updateLayer xs ns]
+    | otherwise = updateLayer (outputs nss) ns
+                    : backpropError xs nss
+    where outputs = map (\(Neuron _ o _) -> o) . head
 
-updateLayer :: Layer -> Layer -> Layer
-updateLayer ps ns =
-    map (\(Neuron ws o e) -> Neuron (update e ps ws) o e) ns
+updateLayer :: [Double] -> Layer -> Layer
+updateLayer xs ns =
+    map (\(Neuron ws o e) -> Neuron (update e xs ws) o e) ns
     where
-        update e ps (w:ws) = updateBias w e : updateWeights e ps ws
+        update e xs (w:ws) = updateBias w e : updateWeights e xs ws
         updateBias b e = b + learningRate * e
 
-updateWeights :: Error -> Layer -> [Weight] -> [Weight]
+updateWeights :: Error -> [Output] -> [Weight] -> [Weight]
 updateWeights _ _ [] = []
-updateWeights e ((Neuron _ o _ ):ps) (w:ws) =
-    w + dWeight : updateWeights e ps ws
-    where dWeight = learningRate * e * o
+updateWeights e (x:xs) (w:ws) =
+    let dWeight = learningRate * e * x
+    in w + dWeight : updateWeights e xs ws
 
 learningRate :: Double
 learningRate = 0.01

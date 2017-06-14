@@ -6,7 +6,7 @@ type Error = Double
 
 type Output = Double
 
-data Neuron = Neuron [Weight] Output Error deriving Show
+data Neuron = Neuron [Weight] Output Error deriving (Show, Eq)
 
 type Layer = [Neuron]
 
