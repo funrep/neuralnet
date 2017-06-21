@@ -1,5 +1,8 @@
 module Backprop where
 
+import Data.List
+import Data.Maybe
+
 import Types
 
 -- Calculate activations values
@@ -26,22 +29,23 @@ calcOutError ts nss =
         run _ [] = []
         run (t:ts) ((Neuron ws o _):ns) =
             (Neuron ws o (err t o)) : run ts ns
-        err t y = (t - y) * y * (1 - y)
+        err t o = (t - o) * o * (1 - o)
 
 -- Calculate error signals for hidden layers
 calcHidError :: Network -> Network
 calcHidError = reverse . calcHidErrorRev . reverse
 
 calcHidErrorRev :: Network -> Network
-calcHidErrorRev (ns:nss) = ns : run ns nss
+calcHidErrorRev old@(ns:nss) = ns : run ns nss
     where
         run _ [] = []
         run ps (ns:nss) =
-            map (\(Neuron ws o e) -> Neuron ws o $ err o e ps) ns
+            map (\(Neuron ws o e) -> Neuron ws o $ err o e ps ns) ns
                 : run ns nss
-        err o e ns = o * (1 - o) * (errSum e ns)
-        errSum e ns = sum $ map (\(Neuron ws _ e) ->
-                                foldr (\w1 w2 -> w1 * e + w2 * e) 0 ws) ns
+        err o e ps ns = o * (1 - o) * (errSum ps ns)
+        errSum ps ns = sum $ map (\(Neuron ws _ e) ->
+                                (ws !! index ns) * e) ps
+        index ns = fromJust $ elemIndex ns old
 
 -- Back propagate errors
 backpropError :: [Double] -> Network -> Network
@@ -69,4 +73,4 @@ updateWeights e (x:xs) (w:ws) =
     in w + dWeight : updateWeights e xs ws
 
 learningRate :: Double
-learningRate = 0.01
+learningRate = 0.2
