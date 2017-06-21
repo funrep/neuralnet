@@ -2,7 +2,7 @@
 
 > An artificial neural net in Haskell.
 
-A basic implementation of a feedforward ANN with backpropegation.
+A basic implementation of a feedforward ANN with backpropagation.
 
 ## Try it out
 
