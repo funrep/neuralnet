@@ -32,8 +32,15 @@ overallError :: [[Double]] -> [[Double]] -> Network -> Double
 overallError xss yss net =
     sum $ zipWith (\xs ys -> errorTotal (runNet xs net) ys) xss yss
 
-train :: Int -> Double -> [[Double]] -> [[Double]] -> Network -> Network
-train max minErr xss yss net = run 0 net
+train :: Int -> [[Double]] -> [[Double]] -> Network -> Network
+train max xss yss net = run 0 net
+    where
+        run k net
+            | k == max = net
+            | otherwise = run (k + 1) $ epoch xss yss net
+
+trainTo :: Int -> Double -> [[Double]] -> [[Double]] -> Network -> Network
+trainTo max minErr xss yss net = run 0 net
     where
         run k net
             | k == max = net
@@ -68,8 +75,8 @@ ys = filter (\xs -> length xs == 1) samples
 
 test :: IO Network
 test = do
-    net <- createNet [2,2,1]
-    let net' = train 10000 0.1 xs ys net
+    net <- createNet [2,3,1]
+    let net' = train 10000 xs ys net
     return net'
 
 someFunc :: IO ()

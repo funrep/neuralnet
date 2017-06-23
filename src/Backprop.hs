@@ -44,8 +44,12 @@ calcHidErrorRev old@(ns:nss) = ns : run ns nss
                 : run ns nss
         err o e ps ns = o * (1 - o) * (errSum ps ns)
         errSum ps ns = sum $ map (\(Neuron ws _ e) ->
-                                (ws !! index ns) * e) ps
+                                ((tail ws) !! index ns) * e) ps
         index ns = fromJust $ elemIndex ns old
+
+-- calcHidErrorRev :: Network -> Network
+-- calcHidErrorRev
+-- calcHidErrorRev (ns:nss)
 
 -- Back propagate errors
 backpropError :: [Double] -> Network -> Network
