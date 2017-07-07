@@ -6,12 +6,13 @@ A basic implementation of a feedforward ANN with backpropagation.
 
 ## Try it out
 
-The function `test` trains a network to learn the XOR operator.
+The `Numeric.ANN.XOR` modules trains a network to learn the XOR operator.
 
 ```
 $ stack ghci
 ...
-> net <- test
+> import Numeric.ANN.XOR
+> net <- xorNet
 > runNet [1,0] net
 0.969682524723555
 ```

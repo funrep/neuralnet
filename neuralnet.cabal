@@ -13,11 +13,13 @@ cabal-version:       >=1.10
 
 library
   hs-source-dirs:      src
-  exposed-modules:     ANN
-                     , Types
-                     , Backprop
+  exposed-modules:     Numeric.ANN
+                     , Numeric.ANN.Types
+                     , Numeric.ANN.Backprop
+                     , Numeric.ANN.XOR
   build-depends:       base >= 4.7 && < 5
                      , random
+                     , vector
   default-language:    Haskell2010
 
 executable neuralnet-exe
