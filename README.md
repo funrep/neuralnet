@@ -6,7 +6,7 @@ A basic implementation of a feedforward ANN with backpropagation.
 
 ## Try it out
 
-The `Numeric.ANN.XOR` modules trains a network to learn the XOR operator.
+The `Numeric.ANN.XOR` module trains a network to learn the XOR operator.
 
 ```
 $ stack ghci
