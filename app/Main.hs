@@ -1,6 +1,6 @@
 module Main where
 
-import ANN
+import Numeric.ANN
 
 main :: IO ()
-main = someFunc
+main = putStrLn "Hello, World!"

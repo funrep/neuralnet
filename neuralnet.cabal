@@ -1,35 +1,69 @@
-name:                neuralnet
-version:             0.1.0.0
-homepage:            https://github.com/funrep/neuralnet#readme
-license:             BSD3
-license-file:        LICENSE
-author:              funrep
-maintainer:          example@example.com
-copyright:           2017 Karl-Oskar Rikås
-category:            AI
-build-type:          Simple
-extra-source-files:  README.md
-cabal-version:       >=1.10
+cabal-version: 1.12
 
-library
-  hs-source-dirs:      src
-  exposed-modules:     Numeric.ANN
-                     , Numeric.ANN.Types
-                     , Numeric.ANN.Backprop
-                     , Numeric.ANN.XOR
-  build-depends:       base >= 4.7 && < 5
-                     , random
-                     , vector
-  default-language:    Haskell2010
+-- This file has been generated from package.yaml by hpack version 0.34.3.
+--
+-- see: https://github.com/sol/hpack
 
-executable neuralnet-exe
-  hs-source-dirs:      app
-  main-is:             Main.hs
-  ghc-options:         -threaded -rtsopts -with-rtsopts=-N
-  build-depends:       base
-                     , neuralnet
-  default-language:    Haskell2010
+name:           neuralnet
+version:        0.1.0.0
+description:    Please see the README on GitHub at <https://github.com/githubuser/neuralnet#readme>
+homepage:       https://github.com/githubuser/neuralnet#readme
+bug-reports:    https://github.com/githubuser/neuralnet/issues
+author:         Author name here
+maintainer:     example@example.com
+copyright:      2021 Author name here
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
 
 source-repository head
-  type:     git
-  location: https://github.com/funrep/neuralnet
+  type: git
+  location: https://github.com/githubuser/neuralnet
+
+library
+  exposed-modules:
+      Numeric.ANN
+      Numeric.ANN.Backprop
+      Numeric.ANN.Types
+      Numeric.ANN.XOR
+  other-modules:
+      Paths_neuralnet
+  hs-source-dirs:
+      src
+  build-depends:
+      base >=4.7 && <5
+    , random
+    , vector
+  default-language: Haskell2010
+
+executable neuralnet-exe
+  main-is: Main.hs
+  other-modules:
+      Paths_neuralnet
+  hs-source-dirs:
+      app
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , neuralnet
+    , random
+    , vector
+  default-language: Haskell2010
+
+test-suite neuralnet-test
+  type: exitcode-stdio-1.0
+  main-is: Spec.hs
+  other-modules:
+      Paths_neuralnet
+  hs-source-dirs:
+      test
+  ghc-options: -threaded -rtsopts -with-rtsopts=-N
+  build-depends:
+      base >=4.7 && <5
+    , neuralnet
+    , random
+    , vector
+  default-language: Haskell2010
