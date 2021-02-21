@@ -1,5 +1,6 @@
 module Numeric.ANN (
     Network,
+    SampleData,
     createNet,
     runNet,
     train,
@@ -9,21 +10,25 @@ module Numeric.ANN (
 
 import Data.Vector (Vector)
 import qualified Data.Vector as V
-import System.Random
+import System.Random.Stateful
+import Control.Monad
 
 import Numeric.ANN.Types
 import Numeric.ANN.Backprop
 
-createNet :: [Int] -> IO Network
+createNet :: StatefulGen g m => [Int] -> g -> m Network
 createNet xs = create (head xs) (tail xs)
-    where
-        create _ [] = return V.empty
-        create p (x:xs) = do
-            ns <- V.replicateM x (neuron p)
-            fmap (V.cons ns) (create x xs)
-        neuron p = do
-            ws <- V.replicateM (p + 1) (randomRIO (-1, 1))
-            return (Neuron ws 0 0)
+
+create :: StatefulGen g m => Int -> [Int] -> g -> m Network
+create _ [] g = return V.empty
+create p (x:xs) g = do
+    ns <- V.replicateM x (neuron p g)
+    fmap (V.cons ns) (create x xs g)
+
+neuron :: StatefulGen g m => Int -> g -> m Neuron
+neuron p g = do
+    ws <- V.replicateM p $ uniformRM (1, 6) g
+    return $ Neuron ws 0 0
 
 runNet :: [Double] -> Network -> Vector Double
 runNet xs = fmap (\(Neuron _ o _) -> o) . V.last . feedForward (V.fromList xs)
