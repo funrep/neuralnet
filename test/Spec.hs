@@ -34,7 +34,7 @@ netTest s net data' = testGroup s $ map test data'
 
 net21, net231 :: Network
 net21 = runStateGen_ (mkStdGen 1) $ createNet [2, 1]
-net231 = runStateGen_ (mkStdGen 2) $ createNet [2, 2, 1]
+net231 = runStateGen_ (mkStdGen 2) $ createNet [2, 3, 1]
 
 orData, andData, xorData :: [([Double], [Double])]
 orData =

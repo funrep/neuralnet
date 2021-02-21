@@ -6,6 +6,7 @@ type Network = Vector Layer
 
 type Layer = Vector Neuron
 
+-- Seperate bias from weights?
 data Neuron = Neuron (Vector Weight) Output Error
     deriving (Show, Eq)
 
