@@ -16,18 +16,18 @@ import Control.Monad
 import Numeric.ANN.Types
 import Numeric.ANN.Backprop
 
-createNet :: StatefulGen g m => [Int] -> g -> m Network
+createNet :: RandomGenM g r m => [Int] -> g -> m Network
 createNet xs = create (head xs) (tail xs)
 
-create :: StatefulGen g m => Int -> [Int] -> g -> m Network
+create :: RandomGenM g r m => Int -> [Int] -> g -> m Network
 create _ [] g = return V.empty
 create p (x:xs) g = do
     ns <- V.replicateM x (neuron p g)
     fmap (V.cons ns) (create x xs g)
 
-neuron :: StatefulGen g m => Int -> g -> m Neuron
+neuron :: RandomGenM g r m => Int -> g -> m Neuron
 neuron p g = do
-    ws <- V.replicateM p $ uniformRM (1, 6) g
+    ws <- V.replicateM (p + 1) $ randomRM (-1.0, 1.0) g
     return $ Neuron ws 0 0
 
 runNet :: [Double] -> Network -> Vector Double

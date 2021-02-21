@@ -18,27 +18,23 @@ allTests = testGroup "All Tests"
 
 annTests :: TestTree
 annTests = testGroup "ann"
-    [ netTest "[2-1 net OR-data]" net1 orData
-    , netTest "[2-1 net AND-data]" net1 andData
-    , netTest "[2-3-1 net OR-data]" net2 orData
-    , netTest "[2-3-1 net AND-data" net2 andData
-    , netTest "[2-3-1 net XOR-data" net2 xorData
+    [ netTest "[2-1 net OR-data]" net21 orData
+    , netTest "[2-1 net AND-data]" net21 andData
+    , netTest "[2-3-1 net OR-data]" net231 orData
+    , netTest "[2-3-1 net AND-data]" net231 andData
+    , netTest "[2-3-1 net XOR-data]" net231 xorData
     ]
 
 netTest :: String -> Network -> [([Double], [Double])] -> TestTree
 netTest s net data' = testGroup s $ map test data'
     where
+        net' = train 10000 0.1 (createSample data') net
         test (input, expected) = testCase (show input) $
-            (V.head $ trainAndRun (createSample data') net input) @?~== head expected
+            (V.head $ runNet input net') @?~== head expected
 
-trainAndRun :: SampleData -> Network -> [Double] -> Vector Double
-trainAndRun data' net input =
-    runNet input $
-        train 10 0.1 data' net
-
-net1, net2 :: Network
-net1 = runStateGen_ (mkStdGen 1) $ createNet [2, 1]
-net2 = runStateGen_ (mkStdGen 2) $ createNet [2, 3, 1]
+net21, net231 :: Network
+net21 = runStateGen_ (mkStdGen 1) $ createNet [2, 1]
+net231 = runStateGen_ (mkStdGen 2) $ createNet [2, 2, 1]
 
 orData, andData, xorData :: [([Double], [Double])]
 orData =
