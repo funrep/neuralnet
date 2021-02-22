@@ -2,11 +2,8 @@ module Numeric.ANN.Types where
 
 import Data.Vector (Vector)
 
-type Network = Vector Layer
+type Network = Vector (Vector Neuron)
 
-type Layer = Vector Neuron
-
--- Seperate bias from weights?
 data Neuron = Neuron (Vector Weight) Output Error
     deriving (Show, Eq)
 

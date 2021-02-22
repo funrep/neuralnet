@@ -1,6 +1,7 @@
-module Numeric.ANN.Backprop (
-    backprop,
-    feedForward,
+module Numeric.ANN.Backprop
+    ( backprop
+    , feedForward
+    , outputs
     ) where
 
 
@@ -17,13 +18,29 @@ outputs = fmap (\(Neuron _ o _) -> o)
 toNeurons :: Vector Double -> Vector Neuron
 toNeurons = fmap (\x -> Neuron V.empty x 0)
 
--- The backprop algorithm
-backprop :: Double -> Vector Double -> Vector Double -> Network -> Network
+-- | The backprop algorithm.
+backprop ::
+    -- | Learning rate
+    Double ->
+    -- | Input vector
+    Vector Double ->
+    -- | Expected output
+    Vector Double ->
+    -- | Neural network
+    Network ->
+    -- | Updated network
+    Network
 backprop l xs ts =
-    backpropError l xs . calcHidError . calcOutError ts . feedForward xs
+    updateWeights l xs . backpropErrors . calcOutErrors ts . feedForward xs
 
--- Calculate activations values
-feedForward :: Vector Double -> Network -> Network
+-- | Calculate activations values.
+feedForward ::
+    -- | Input vector
+    Vector Double ->
+    -- | Neural network
+    Network ->
+    -- | Updated network
+    Network
 feedForward xs = V.tail . V.scanl runLayer (toNeurons xs)
     where
         runLayer ps ns = fmap (calcOutput (outputs ps)) ns
@@ -34,33 +51,39 @@ calcOutput xs (Neuron ws _ e) = Neuron ws out e
         out = sigmoid . V.sum $ V.zipWith (*) (1 `V.cons` xs) ws
         sigmoid x = 1 / (1 + (exp 1)**(-x))
 
--- Calculate error signals of output layer
-calcOutError :: Vector Double -> Network -> Network
-calcOutError ts nss =
-    V.init nss V.++ 
-        V.singleton(V.zipWith (\t (Neuron ws o _) -> Neuron ws o (err t o)) ts $ V.last nss)
+-- | Calculate error signals of the output layer, using sigmoid's derivative.
+calcOutErrors ::
+    -- | Expected output
+    Vector Double ->
+    -- | Neural network
+    Network ->
+    -- | Updated network 
+    Network
+calcOutErrors ts nss =
+    V.init nss V.++
+        V.singleton (V.zipWith (\t (Neuron ws o _) -> Neuron ws o (err t o)) ts $ V.last nss)
     where err t o = (t - o) * o * (1 - o)
 
--- Calculate error signals for hidden layers
-calcHidError :: Network -> Network
-calcHidError nss = V.scanr1 runLayer nss
+-- | Back propegate error signals for the hidden layers.
+backpropErrors :: Network -> Network
+backpropErrors nss = V.scanr1 runLayer nss
     where
         runLayer ns ps = fmap (\(Neuron ws o _) -> Neuron ws o $ err o ns ps) ns
-        err o ns ps = o * (1 - o) * (errSum ns ps)
+        err o ns ps = (errSum ns ps) * o * (1 - o)
         errSum ns ps = V.foldl' (\k (Neuron ws _ e) -> k + getWeight ns ws * e) 0 ps
-        getWeight ns ws = V.tail ws V.! (fromJust $ V.elemIndex ns nss) -- ugly ugly code
+        getWeight ns ws = V.tail ws V.! (fromJust $ V.elemIndex ns nss)
 
--- Back propagate errors
-backpropError :: Double -> Vector Double -> Network -> Network
-backpropError l xs nss = V.zipWith runLayer nss (toNeurons xs `V.cons` V.init nss)
+updateWeights ::
+    -- | Learning rate
+    Double ->
+    -- | Input vector
+    Vector Double ->
+    -- | Neural network
+    Network ->
+    -- | Updated network 
+    Network
+updateWeights l xs nss = V.zipWith runLayer nss (toNeurons xs `V.cons` V.init nss)
     where
-        runLayer ns ps = fmap (\(Neuron ws o e) -> Neuron (update e (outputs ps) ws) o e) ns
-        update e xs ws = updateBias (V.head ws) e `V.cons` updateWeights l e xs (V.tail ws)
-        updateBias b e = b + l * e
+        runLayer ns ps = fmap (\(Neuron ws o e) -> Neuron (update e ws (outputs ps)) o e) ns
+        update e ws xs = V.zipWith (\w x -> w + l * e * x) ws (1 `V.cons` xs)
  
-updateWeights :: Double -> Error -> Vector Output -> Vector Weight -> Vector Weight
-updateWeights l e xs ws
-    | V.null ws = V.empty 
-    | otherwise = 
-        let dWeight = l * e * (V.head xs)
-        in (V.head ws + dWeight) `V.cons` updateWeights l e (V.tail xs) (V.tail ws)
