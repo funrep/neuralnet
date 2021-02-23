@@ -4,6 +4,8 @@ module Data.MNIST
     , readImages
     , showImage
     , dataToSample
+    , readInteger
+    , readBytes
     ) where
 
 import Data.ByteString (ByteString)
