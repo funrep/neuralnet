@@ -1,6 +1,7 @@
 module Numeric.ANN
-    ( Network
+    ( ANN
     , SampleData
+    , createNetIO
     , createNet
     , runNet
     , train
@@ -17,15 +18,29 @@ import Numeric.ANN.Types
 import Numeric.ANN.Backprop
 
 -- | Creates a neural network.
-createNet ::
-    RandomGenM g r m =>
+createNetIO ::
+    -- | Seed for random number generator
+    Int ->
     -- | List representing number of neurons in each layer
     [Int] ->
+    -- | Resulting neural network
+    IO ANN 
+createNetIO seed xs = do
+        g <- newIOGenM $ mkStdGen seed
+        createNet g xs
+
+-- | Creates a neural network using random number generator.
+createNet ::
+    RandomGenM g r m =>
     -- | Random number generator
     g ->
+    -- | List representing number of neurons in each layer
+    [Int] ->
     -- | Resulting neural network
-    m Network
-createNet xs = create (head xs) (tail xs)
+    m ANN
+createNet g xs = do
+    net <- create (head xs) (tail xs) g
+    return $ ANN net xs
     where
         create _ [] g = return V.empty
         create p (x:xs) g = do
@@ -36,8 +51,13 @@ createNet xs = create (head xs) (tail xs)
             return $ Neuron ws 0 0
 
 -- | Run neural network on some input.
-runNet :: [Double] -> Network -> Vector Double
-runNet xs = outputs . V.last . feedForward (V.fromList xs)
+runNet :: [Double] -> ANN -> Maybe (Vector Double)
+runNet xs (ANN net dims)
+    | head dims /= length xs = Nothing
+    | otherwise = Just $ runNet' xs net
+
+runNet' :: [Double] -> Network -> Vector Double
+runNet' xs = outputs . V.last . feedForward (V.fromList xs)
 
 -- | Train neural network.
 train ::
@@ -48,10 +68,13 @@ train ::
     -- | Training data
     SampleData ->
     -- | Neural network
-    Network ->
+    ANN ->
     -- | Updated network
-    Network
-train max learningRate xss = run max
+    Maybe ANN
+train max learningRate xss (ANN net dims)
+    | head dims /= (V.length . fst $ V.head xss)
+        && last dims /= (V.length . snd $ V.head xss) = Nothing
+    | otherwise = Just $ ANN (run max net) dims
     where
         run 0 nss = nss
         run k nss = run (k - 1) $ epoch learningRate xss nss
@@ -67,10 +90,13 @@ trainTo ::
     -- | Training data
     SampleData ->
     -- | Neural network
-    Network ->
+    ANN ->
     -- | Updated network
-    Network
-trainTo max learningRate error xss = run max
+    Maybe ANN
+trainTo max learningRate error xss (ANN net dims)
+    | head dims /= (V.length . fst $ V.head xss)
+        && last dims /= (V.length . snd $ V.head xss) = Nothing
+    | otherwise = Just $ ANN (run max net) dims
     where
         run k nss
             | k == 0 = nss
@@ -79,7 +105,7 @@ trainTo max learningRate error xss = run max
 
 overallError :: SampleData -> Network -> Double
 overallError xss nss =
-    V.sum $ fmap (\(xs, ys) -> errorTotal (runNet (V.toList xs) nss) ys) xss
+    V.sum $ fmap (\(xs, ys) -> errorTotal (runNet' (V.toList xs) nss) ys) xss
 
 errorTotal :: Vector Double -> Vector Double -> Double
 errorTotal xs ys = (1/2) * (V.sum . fmap (**2) $ V.zipWith (-) xs ys)
