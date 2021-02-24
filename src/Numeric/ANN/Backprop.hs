@@ -68,10 +68,11 @@ calcOutErrors ts nss =
 backpropErrors :: Network -> Network
 backpropErrors nss = V.scanr1 runLayer nss
     where
-        runLayer ns ps = fmap (\(Neuron ws o _) -> Neuron ws o $ err o ns ps) ns
-        err o ns ps = (errSum ns ps) * o * (1 - o)
-        errSum ns ps = V.foldl' (\k (Neuron ws _ e) -> k + getWeight ns ws * e) 0 ps
-        getWeight ns ws = V.tail ws V.! (fromJust $ V.elemIndex ns nss)
+        runLayer ns ps = fmap (\n@(Neuron ws o e) -> Neuron ws o $ err o ps) ns
+        err o ps = (errSum ps) * o * (1 - o)
+        errSum ps = V.foldl' (\k p@(Neuron ws _ e) -> k + getWeight (index p ps) ws * e) 0 ps
+        index n ns = fromJust $ V.elemIndex n ns
+        getWeight i ws = V.tail ws V.! i
 
 updateWeights ::
     -- | Learning rate

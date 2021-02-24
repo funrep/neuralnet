@@ -62,7 +62,8 @@ split k xs = take k xs : split k (drop k xs)
 dataToSample :: [[Int]] -> [Int] -> [([Double], [Double])]
 dataToSample imgs labels = zipWith (,) imgs' labels'
     where
-        imgs' = (map . map) fromIntegral imgs
+        imgs' = (map . map) (normalize . fromIntegral) imgs
+        normalize x = 2*(x / 255.0) - 1
         labels' = map (labelToLayer) labels
         labelToLayer x = update x 1.0 $ replicate 10 0.0 
 
